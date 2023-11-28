@@ -5,6 +5,8 @@ Our project goal is to make a Space Invaders like in 3D using only OpenGL in our
 
 Developers:
 
+[Gabriel Amaral Silva](https://github.com/Rayinlie)
+
 [João Pedro Martins Oliveira](https://github.com/joao-zip)
 
 [Matheus Ramos Esteves](https://https://github.com/Esteves31)
