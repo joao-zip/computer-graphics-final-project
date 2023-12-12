@@ -3,9 +3,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
 
 const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(18, 7, 12);
+camera.lookAt(0, 1, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 
@@ -17,14 +19,24 @@ document.body.appendChild( renderer.domElement );
 const ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
 scene.add( ambientLight );
 
+let live = 10;
+let score = 0;
+let inc = 0.08; // movement of enemy spaceship
 let spaceship;
-let mixer;
+let spaceshipBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
+let shoot;
+let shootBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
+let enemy;
+let enemyBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
+let enemyShoot;
+let enemyShootBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
+
 const loader = new GLTFLoader();
 
-loader.load('/spaceship.glb', function (gltf) {
+loader.load('/public/assets/nave_jogador_arredondadoV2.gltf', function (gltf) {
   spaceship = gltf.scene;
-  spaceship.scale.set(0.5, 0.5, 0.5);
-
+  spaceship.position.set(0, 0.25, 8)
+  spaceship.scale.set(0.3, 0.3, 0.3);
   scene.add(spaceship);
 });
 
@@ -61,7 +73,7 @@ loader.load('/public/assets/earth/scene.gltf', function (gltf) {
 });
 
 const spotLight = new THREE.SpotLight( 0xffffff, 0.7 );
-spotLight.position.set(2, 12, 2);
+spotLight.position.set(0, 70, 8);
 spotLight.angle = Math.PI / 6;
 spotLight.penumbra = 0.5;
 spotLight.decay = 1;
@@ -94,87 +106,154 @@ const controls = new OrbitControls( camera, renderer.domElement );
 let isTurningLeft = false;
 let isTurningRight = false;
 
-function animate() {
-    requestAnimationFrame( animate );
-    renderer.render( scene, camera );
 
-    if (isTurningLeft) {
-        if (spaceship.rotation.z < Math.PI / 4) {
-            spaceship.rotation.z += 0.001;
-        }
-    }
-
-    if (isTurningRight) {
-        if (spaceship.rotation.z > -Math.PI / 4) {
-            spaceship.rotation.z -= 0.001;
-        }
-    }
-    sun.rotation.y += 0.01;    
-}
-
-animate();
+document.addEventListener("w", (e) => {spaceship.position.y += moveDistance;});
+document.addEventListener("a", (e) => {spaceship.position.x -= moveDistance;
+                                        isTurningLeft = true;});
+document.addEventListener("mousedown", (e) => {spaceship.position.y += moveDistance;}, false);
 
 document.addEventListener('keydown', (event) => {
     const keyCode = event.keyCode;
     const moveDistance = 0.1; // Adjust this value to change the movement speed
-
-    switch (keyCode) {
-        case 65: // A key
+    
+    switch (keyCode) { 
+        case 32: // Space key - shoot
+            const loaderShoot = new GLTFLoader();
+            loaderShoot.load('/public/assets/Tiro_jogoadorV4.gltf', function (gltf) {
+                    shoot = gltf.scene;
+                    shoot.position.set(spaceship.position.x, spaceship.position.y, spaceship.position.z);
+                    shoot.scale.set(0.06, 0.06, 0.06);
+                    scene.add(shoot); // spacebar = shoot that follows our spaceship
+            });
+            break;
+            case 65: // A key
             spaceship.position.x -= moveDistance;
+            moveDistance += 0.1;
             isTurningLeft = true;
             break;
-        case 68: // D key
+            case 68: // D key
             spaceship.position.x += moveDistance;
             isTurningRight = true;
             break;
-        case 87: // W key
+            case 87: // W key
             spaceship.position.y += moveDistance;
             break;
-        case 83: // S key
-            const groundHeight = 0; // Adjust this value to change the ground height
+            case 83: // S key
+            const groundHeight = 0.25; // Adjust this value to change the ground height
             if (spaceship.position.y > groundHeight) {
                 spaceship.position.y -= moveDistance;
             }   
             break;
-        case 65 && 87: // A and W keys (diagonal movement)
+            case 65 && 87: // A and W keys (diagonal movement)
             spaceship.position.x -= moveDistance;
             spaceship.position.y += moveDistance;
             isTurningLeft = true;
             break;
-        case 68 && 87: // D and W keys (diagonal movement)
+            case 68 && 87: // D and W keys (diagonal movement)
             spaceship.position.x += moveDistance;
             spaceship.position.y += moveDistance;
             isTurningRight = true;
             break;
-        case 65 && 83: // A and S keys (diagonal movement)
+            case 65 && 83: // A and S keys (diagonal movement)
             spaceship.position.x -= moveDistance;
             spaceship.position.y -= moveDistance;
             isTurningLeft = true;
             break;
-        case 68 && 83: // D and S keys (diagonal movement)
+            case 68 && 83: // D and S keys (diagonal movement)
             spaceship.position.x += moveDistance;
             spaceship.position.y -= moveDistance;
             isTurningRight = true;
     }
 });
 
-document.addEventListener('keyup', (event) => {
-    const keyCode = event.keyCode;
-
-    switch (keyCode) {
-        case 65: // A key
+    document.addEventListener('keyup', (event) => {
+        const keyCode = event.keyCode;
+        
+        switch (keyCode) {
+            case 65: // A key
             isTurningLeft = false;
             spaceship.rotation.z = 0;
             break;
-        case 68: // D key
+            case 68: // D key
             isTurningRight = false;
             spaceship.rotation.z = 0;
             break;
+        }
+    });
+    //PT pra cima
+
+
+    function checkCollisions(){ // check if the hitbox collides
+        if(shoot){
+            if(shootBox.intersectsBox(enemyBox)){
+                scene.remove(enemy);
+                score += 1000;
+            }
+        }
+        if (enemyShoot){
+            if(enemyShootBox.intersectsBox(spaceshipBox)){
+                scene.remove(enemyShoot)
+                live -= 1;
+            }
+        }
     }
-});
 
 window.addEventListener('resize', function () {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize( window.innerWidth, window.innerHeight );
   }, false);
+
+    function animate() {
+        requestAnimationFrame( animate );
+        renderer.render( scene, camera );
+        //console.log(score);
+        console.log(live);
+
+        checkCollisions();
+
+        spaceshipBox.setFromObject(spaceship);
+
+        if(enemy){
+            enemyBox.setFromObject(enemy);
+            enemy.position.x += inc;
+            if(enemy.position.x >= 5){
+                inc = -0.08; // enemy spaceship going to right limit
+            }
+            else if(enemy.position.x <= -5){
+                inc = +0.08; // enemy spaceship going to left limit
+            }
+        }
+        if (shoot){
+            shootBox.setFromObject(shoot); 
+            //console.log(shootBox);
+            shoot.position.z -= 0.4;
+            if (shoot.position.z <= -8){
+                scene.remove(shoot);
+            } // adjust this value to change shoot speed
+        }
+
+        if (enemyShoot){
+            enemyShootBox.setFromObject(enemyShoot);
+            //console.log(enemyShootBox);
+             enemyShoot.position.z += 0.4; // adjust this value to change shoot speed
+            if (enemyShoot.position.z >= 12){
+                scene.remove(enemyShoot);
+            }
+        }
+
+        if (isTurningLeft) {
+            if (spaceship.rotation.z < Math.PI / 4) {
+                spaceship.rotation.z += 0.001;
+            }
+        }
+    
+        if (isTurningRight) {
+            if (spaceship.rotation.z > -Math.PI / 4) {
+                spaceship.rotation.z -= 0.001;
+            }
+        }
+        sun,rotation.y += 0.01;
+    }
+    
+    animate();
