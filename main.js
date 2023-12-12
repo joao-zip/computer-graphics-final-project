@@ -9,13 +9,6 @@ camera.position.set(18, 7, 12);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 
-const planeGeometry = new THREE.PlaneGeometry( 100, 100 );
-const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xbcbcbc });
-
-const plane = new THREE.Mesh( planeGeometry, planeMaterial );
-plane.rotation.x = -Math.PI / 2;
-plane.receiveShadow = true;
-scene.add( plane );
 
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.shadowMap.enabled = true;
@@ -35,12 +28,54 @@ loader.load('/spaceship.glb', function (gltf) {
   scene.add(spaceship);
 });
 
+let sun;
+loader.load('/public/assets/sun/scene.gltf', function (gltf) {
+    sun = gltf.scene;
+    sun.scale.set(5, 5, 5);
+    sun.position.set(20, 11, -510);
+    sun.rotation.y = Math.PI / 2;
+    mixer = new THREE.AnimationMixer(sun);
+    const action = mixer.clipAction(gltf.animations[0]);
+    action.play();
+    
+    scene.add(sun);
+});
+
+let space;
+loader.load('/public/assets/space/scene.gltf', function (gltf) {
+    space = gltf.scene;
+    space.scale.set(110, 110, 110);
+    space.position.set(0, 0, 0);
+    
+    scene.add(space);   
+});
+
+let earth;
+loader.load('/public/assets/earth/scene.gltf', function (gltf) {
+    earth = gltf.scene;
+    earth.scale.set(0.1, 0.1, 0.1);
+    earth.position.set(-20, 11, -530);
+    earth.rotation.y = Math.PI / 2;
+    
+    scene.add(earth);   
+});
+
 const spotLight = new THREE.SpotLight( 0xffffff, 0.7 );
 spotLight.position.set(2, 12, 2);
 spotLight.angle = Math.PI / 6;
 spotLight.penumbra = 0.5;
 spotLight.decay = 1;
 spotLight.distance = 0;
+
+const sunLight = new THREE.SpotLight( 0xffffff, 7 );
+sunLight.position.set(20, 11, -510);
+sunLight.angle = Math.PI / 6;
+sunLight.penumbra = 0.02;
+sunLight.decay = 0.5;
+sunLight.distance = 0;
+
+scene.add( sunLight );
+scene.add( sunLight.target );
 
 spotLight.castShadow = true;
 spotLight.shadow.mapSize.width = 1024;
@@ -50,9 +85,6 @@ spotLight.shadow.camera.far = 60;
 
 scene.add( spotLight );
 scene.add( spotLight.target );
-
-const spotLightHelper = new THREE.SpotLightHelper( spotLight );
-scene.add( spotLightHelper );
 
 const axesHelper = new THREE.AxesHelper( 50 );
 scene.add( axesHelper );
@@ -77,6 +109,7 @@ function animate() {
             spaceship.rotation.z -= 0.001;
         }
     }
+    sun.rotation.y += 0.01;    
 }
 
 animate();
@@ -139,3 +172,9 @@ document.addEventListener('keyup', (event) => {
             break;
     }
 });
+
+window.addEventListener('resize', function () {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+  }, false);
