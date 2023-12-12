@@ -13,22 +13,29 @@ body {
     background-image: url(https://images.unsplash.com/photo-1445905595283-21f8ae8a33d2?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
 }
 
-.initScreen {
+.initScreen,
+.creatorsScreen {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     border-radius: 10px;
+    font-size: 2rem;
 }
 
-.initScreen span {
+.initScreen,
+.creatorsScreen {
     font-family: 'Silkscreen', monospace;
-    font-size: 8rem;
     color: #ddd;
     text-shadow: 0 0 10px #ddd;
 }
 
-.initScreen button {
+.initScreen span {
+    font-size: 8rem;
+}
+
+.initScreen button,
+.creatorsScreen button {
     margin-top: 20px;
     padding: 10px 20px;
     border: none;
@@ -43,4 +50,19 @@ body {
 a {
     text-decoration: none;
     color: rgb(82, 69, 137);
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    width: 20%;
+}
+
+li {
+    margin: 10px 0;
+    text-align: center;
+}
+
+ul {
+    list-style: none;
 }
