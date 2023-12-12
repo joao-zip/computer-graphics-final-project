@@ -3,9 +3,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
 
 const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(18, 7, 12);
+camera.lookAt(0, 1, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 
@@ -24,11 +26,17 @@ document.body.appendChild( renderer.domElement );
 const ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
 scene.add( ambientLight );
 
+let live = 10;
+let score = 0;
 let inc = 0.08; // movement of enemy spaceship
 let spaceship;
+let spaceshipBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
 let shoot;
+let shootBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
 let enemy;
+let enemyBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
 let enemyShoot;
+let enemyShootBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
 
 const loader = new GLTFLoader();
 
@@ -36,27 +44,30 @@ loader.load('/public/assets/nave_jogador_arredondadoV2.gltf', function (gltf) {
   spaceship = gltf.scene;
   spaceship.position.set(0, 0.25, 8)
   spaceship.scale.set(0.3, 0.3, 0.3);
-
   scene.add(spaceship);
 });
 
 const enemyLoader = new GLTFLoader();   
 
 enemyLoader.load('/public/assets/nave_inimigoV2.gltf', function (gltf){
+    
     setInterval (() => {
         const num = Math.floor(Math.random() * 4);
         enemy = gltf.scene;
         enemy.scale.set(0.3, 0.3, 0.3);
         if(num == 0 || num == 1){
                 enemy.position.set(0, 0.25, -6);
+                enemy.rotation.y = Math.PI;
                 scene.add(enemy); // enemy on bottom
         }
         else if(num == 2){
                 enemy.position.set(0, 3.25, -6);
+                enemy.rotation.y = Math.PI;
                 scene.add(enemy); // enemy on mid
         }
         else if(num == 3){
                 enemy.position.set(0, 6.25, -6);
+                enemy.rotation.y = Math.PI;
                 scene.add(enemy); // enemy on top
         }
     }, 5000); // each 5s an enemy spawns
@@ -65,10 +76,14 @@ enemyLoader.load('/public/assets/nave_inimigoV2.gltf', function (gltf){
 const loaderEnemyShoot = new GLTFLoader();      
 loaderEnemyShoot.load('/public/assets/Tiro_Inimigo.gltf', function (gltf) {
     setInterval(() => {
-        enemyShoot = gltf.scene;
-        enemyShoot.scale.set(0.06, 0.06, 0.06);
-        enemyShoot.position.set(enemy.position.x, enemy.position.y, enemy.position.z);
-        scene.add(enemyShoot); // enemy spaceship shoot
+        console.log(enemy);
+        if(enemy.parent === scene){
+            enemyShoot = gltf.scene;
+            enemyShoot.scale.set(0.06, 0.06, 0.06);
+            enemyShoot.position.set(enemy.position.x, enemy.position.y, enemy.position.z);
+            enemyShoot.rotation.y = Math.PI;
+            scene.add(enemyShoot); // enemy spaceship shoot
+        }
     }, 1000);
 });
 
@@ -99,6 +114,14 @@ const controls = new OrbitControls( camera, renderer.domElement );
 let isTurningLeft = false;
 let isTurningRight = false;
 
+
+document.addEventListener("w", (e) => {spaceship.position.y += moveDistance;});
+document.addEventListener("a", (e) => {spaceship.position.x -= moveDistance;
+                                        isTurningLeft = true;});
+document.addEventListener("mousedown", (e) => {spaceship.position.y += moveDistance;}, false);
+
+// PT pra baixo
+
 document.addEventListener('keydown', (event) => {
     const keyCode = event.keyCode;
     const moveDistance = 0.1; // Adjust this value to change the movement speed
@@ -115,6 +138,7 @@ document.addEventListener('keydown', (event) => {
             break;
             case 65: // A key
             spaceship.position.x -= moveDistance;
+            moveDistance += 0.1;
             isTurningLeft = true;
             break;
             case 68: // D key
@@ -129,7 +153,7 @@ document.addEventListener('keydown', (event) => {
             if (spaceship.position.y > groundHeight) {
                 spaceship.position.y -= moveDistance;
             }   
-            break;s
+            break;
             case 65 && 87: // A and W keys (diagonal movement)
             spaceship.position.x -= moveDistance;
             spaceship.position.y += moveDistance;
@@ -149,8 +173,9 @@ document.addEventListener('keydown', (event) => {
             spaceship.position.x += moveDistance;
             spaceship.position.y -= moveDistance;
             isTurningRight = true;
-        }
-    });
+    }
+});
+
     document.addEventListener('keyup', (event) => {
         const keyCode = event.keyCode;
         
@@ -165,12 +190,36 @@ document.addEventListener('keydown', (event) => {
             break;
         }
     });
-    
+    //PT pra cima
+
+
+    function checkCollisions(){ // check if the hitbox collides
+        if(shoot){
+            if(shootBox.intersectsBox(enemyBox)){
+                scene.remove(enemy);
+                score += 1000;
+            }
+        }
+        if (enemyShoot){
+            if(enemyShootBox.intersectsBox(spaceshipBox)){
+                scene.remove(enemyShoot)
+                live -= 1;
+            }
+        }
+    }
+
     function animate() {
         requestAnimationFrame( animate );
         renderer.render( scene, camera );
+        //console.log(score);
+        console.log(live);
+
+        checkCollisions();
+
+        spaceshipBox.setFromObject(spaceship);
 
         if(enemy){
+            enemyBox.setFromObject(enemy);
             enemy.position.x += inc;
             if(enemy.position.x >= 5){
                 inc = -0.08; // enemy spaceship going to right limit
@@ -180,11 +229,21 @@ document.addEventListener('keydown', (event) => {
             }
         }
         if (shoot){
-            shoot.position.z -= 0.25; // adjust this value to change shoot speed
+            shootBox.setFromObject(shoot); 
+            //console.log(shootBox);
+            shoot.position.z -= 0.4;
+            if (shoot.position.z <= -8){
+                scene.remove(shoot);
+            } // adjust this value to change shoot speed
         }
 
         if (enemyShoot){
-            enemyShoot.position.z += 0.25; // adjust this value to change shoot speed
+            enemyShootBox.setFromObject(enemyShoot);
+            //console.log(enemyShootBox);
+             enemyShoot.position.z += 0.4; // adjust this value to change shoot speed
+            if (enemyShoot.position.z >= 12){
+                scene.remove(enemyShoot);
+            }
         }
 
         if (isTurningLeft) {
