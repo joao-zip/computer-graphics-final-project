@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen&display=swap');
+
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url(https://images.unsplash.com/photo-1445905595283-21f8ae8a33d2?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
+}
+
+.initScreen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+}
+
+.initScreen span {
+    font-family: 'Silkscreen', monospace;
+    font-size: 8rem;
+    color: #ddd;
+    text-shadow: 0 0 10px #ddd;
+}
+
+.initScreen button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #ddd;
+    font-family: 'Silkscreen', monospace;
+    font-size: 1.5rem;
+    color: rgb(82, 69, 137);
+    cursor: pointer;
+}
+
+a {
+    text-decoration: none;
+    color: rgb(82, 69, 137);
+}
