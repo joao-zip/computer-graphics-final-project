@@ -19,6 +19,7 @@ document.body.appendChild( renderer.domElement );
 const ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
 scene.add( ambientLight );
 
+let mixer;
 let live = 10;
 let score = 0;
 let inc = 0.08; // movement of enemy spaceship
@@ -30,6 +31,9 @@ let enemy;
 let enemyBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
 let enemyShoot;
 let enemyShootBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
+let sun;
+let earth;
+let space;
 
 const loader = new GLTFLoader();
 
@@ -40,7 +44,42 @@ loader.load('/public/assets/nave_jogador_arredondadoV2.gltf', function (gltf) {
   scene.add(spaceship);
 });
 
-let sun;
+loader.load('/public/assets/nave_inimigoV2.gltf', function (gltf){
+    
+    setInterval (() => {
+        const num = Math.floor(Math.random() * 4);
+        enemy = gltf.scene;
+        enemy.scale.set(0.3, 0.3, 0.3);
+        if(num == 0 || num == 1){
+                enemy.position.set(0, 0.25, -6);
+                enemy.rotation.y = Math.PI;
+                scene.add(enemy); // enemy on bottom
+        }
+        else if(num == 2){
+                enemy.position.set(0, 3.25, -6);
+                enemy.rotation.y = Math.PI;
+                scene.add(enemy); // enemy on mid
+        }
+        else if(num == 3){
+                enemy.position.set(0, 6.25, -6);
+                enemy.rotation.y = Math.PI;
+                scene.add(enemy); // enemy on top
+        }
+    }, 5000); // each 5s an enemy spawns
+});
+ 
+loader.load('/public/assets/Tiro_Inimigo.gltf', function (gltf) {
+    setInterval(() => {
+        console.log(enemy);
+        if(enemy.parent === scene){
+            enemyShoot = gltf.scene;
+            enemyShoot.scale.set(0.06, 0.06, 0.06);
+            enemyShoot.position.set(enemy.position.x, enemy.position.y, enemy.position.z);
+            enemyShoot.rotation.y = Math.PI;
+            scene.add(enemyShoot); // enemy spaceship shoot
+        }
+    }, 1000);
+});
 loader.load('/public/assets/sun/scene.gltf', function (gltf) {
     sun = gltf.scene;
     sun.scale.set(5, 5, 5);
@@ -53,7 +92,6 @@ loader.load('/public/assets/sun/scene.gltf', function (gltf) {
     scene.add(sun);
 });
 
-let space;
 loader.load('/public/assets/space/scene.gltf', function (gltf) {
     space = gltf.scene;
     space.scale.set(110, 110, 110);
@@ -62,7 +100,6 @@ loader.load('/public/assets/space/scene.gltf', function (gltf) {
     scene.add(space);   
 });
 
-let earth;
 loader.load('/public/assets/earth/scene.gltf', function (gltf) {
     earth = gltf.scene;
     earth.scale.set(0.1, 0.1, 0.1);
@@ -253,7 +290,7 @@ window.addEventListener('resize', function () {
                 spaceship.rotation.z -= 0.001;
             }
         }
-        sun,rotation.y += 0.01;
+        sun.rotation.y += 0.01;
     }
     
     animate();
