@@ -141,18 +141,16 @@ const controls = new OrbitControls( camera, renderer.domElement );
 
 let isTurningLeft = false;
 let isTurningRight = false;
+let isMovingUp = false;
+let isMovingDown = false;
+let rotationSpeed = 30  ;
 
-
-document.addEventListener("w", (e) => {spaceship.position.y += moveDistance;});
-document.addEventListener("a", (e) => {spaceship.position.x -= moveDistance;
-                                        isTurningLeft = true;});
-document.addEventListener("mousedown", (e) => {spaceship.position.y += moveDistance;}, false);
+let movement = new THREE.Vector3(0, 0, 0);
 
 document.addEventListener('keydown', (event) => {
-    const keyCode = event.keyCode;
-    const moveDistance = 0.1; // Adjust this value to change the movement speed
+    const moveDistance = 0.3; // Adjust this value to change the movement speed
     
-    switch (keyCode) { 
+    switch (event.keyCode) { 
         case 32: // Space key - shoot
             const loaderShoot = new GLTFLoader();
             loaderShoot.load('/public/assets/Tiro_jogoadorV4.gltf', function (gltf) {
@@ -162,134 +160,143 @@ document.addEventListener('keydown', (event) => {
                     scene.add(shoot); // spacebar = shoot that follows our spaceship
             });
             break;
-            case 65: // A key
-            spaceship.position.x -= moveDistance;
-            moveDistance += 0.1;
+        case 65: // Tecla A
             isTurningLeft = true;
             break;
-            case 68: // D key
-            spaceship.position.x += moveDistance;
+        case 68: // Tecla D
             isTurningRight = true;
             break;
-            case 87: // W key
-            spaceship.position.y += moveDistance;
+        case 87: // Tecla W
+            movement.y = 1;
             break;
-            case 83: // S key
-            const groundHeight = 0.25; // Adjust this value to change the ground height
-            if (spaceship.position.y > groundHeight) {
-                spaceship.position.y -= moveDistance;
-            }   
+        case 83: // Tecla S
+            movement.y = -1;
             break;
-            case 65 && 87: // A and W keys (diagonal movement)
-            spaceship.position.x -= moveDistance;
-            spaceship.position.y += moveDistance;
-            isTurningLeft = true;
-            break;
-            case 68 && 87: // D and W keys (diagonal movement)
-            spaceship.position.x += moveDistance;
-            spaceship.position.y += moveDistance;
-            isTurningRight = true;
-            break;
-            case 65 && 83: // A and S keys (diagonal movement)
-            spaceship.position.x -= moveDistance;
-            spaceship.position.y -= moveDistance;
-            isTurningLeft = true;
-            break;
-            case 68 && 83: // D and S keys (diagonal movement)
-            spaceship.position.x += moveDistance;
-            spaceship.position.y -= moveDistance;
-            isTurningRight = true;
     }
 });
 
-    document.addEventListener('keyup', (event) => {
-        const keyCode = event.keyCode;
-        
-        switch (keyCode) {
-            case 65: // A key
+document.addEventListener('keyup', function(event) {
+    switch (event.keyCode) {
+        case 65: // A
             isTurningLeft = false;
-            spaceship.rotation.z = 0;
             break;
-            case 68: // D key
+        case 68: // D
             isTurningRight = false;
-            spaceship.rotation.z = 0;
             break;
-        }
-    });
-    //PT pra cima
+        case 87: // Tecla W
+        case 83: // Tecla S
+            movement.y = 0;
+            break;
+    }
+});
 
-
-    function checkCollisions(){ // check if the hitbox collides
-        if(shoot){
-            if(shootBox.intersectsBox(enemyBox)){
-                scene.remove(enemy);
-                score += 1000;
-            }
-        }
-        if (enemyShoot){
-            if(enemyShootBox.intersectsBox(spaceshipBox)){
-                scene.remove(enemyShoot)
-                live -= 1;
-            }
+function checkCollisions(){ // check if the hitbox collides
+    if(shoot){
+        if(shootBox.intersectsBox(enemyBox)){
+            scene.remove(enemy);
+            score += 1000;
         }
     }
+    if (enemyShoot){
+        if(enemyShootBox.intersectsBox(spaceshipBox)){
+            scene.remove(enemyShoot)
+            live -= 1;
+        }
+    }
+}
 
 window.addEventListener('resize', function () {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize( window.innerWidth, window.innerHeight );
-  }, false);
+}, false);
 
-    function animate() {
-        requestAnimationFrame( animate );
-        renderer.render( scene, camera );
-        //console.log(score);
-        console.log(live);
+function checkBounds() {
+    const groundHeight = 0.25; // Ajuste esse valor para alterar a altura do solo
+    const height = 5.8;
 
-        checkCollisions();
-
-        spaceshipBox.setFromObject(spaceship);
-
-        if(enemy){
-            enemyBox.setFromObject(enemy);
-            enemy.position.x += inc;
-            if(enemy.position.x >= 5){
-                inc = -0.08; // enemy spaceship going to right limit
-            }
-            else if(enemy.position.x <= -5){
-                inc = +0.08; // enemy spaceship going to left limit
-            }
-        }
-        if (shoot){
-            shootBox.setFromObject(shoot); 
-            //console.log(shootBox);
-            shoot.position.z -= 0.4;
-            if (shoot.position.z <= -8){
-                scene.remove(shoot);
-            } // adjust this value to change shoot speed
-        }
-
-        if (enemyShoot){
-            enemyShootBox.setFromObject(enemyShoot);
-            //console.log(enemyShootBox);
-             enemyShoot.position.z += 0.4; // adjust this value to change shoot speed
-            if (enemyShoot.position.z >= 12){
-                scene.remove(enemyShoot);
-            }
-        }
-
-        if (isTurningLeft) {
-            if (spaceship.rotation.z < Math.PI / 4) {
-                spaceship.rotation.z += 0.001;
-            }
-        }
-    
-        if (isTurningRight) {
-            if (spaceship.rotation.z > -Math.PI / 4) {
-                spaceship.rotation.z -= 0.001;
-            }
-        }
-        sun.rotation.y += 0.01;
+    // Limite da posição Y
+    if (spaceship.position.y < groundHeight) {
+        spaceship.position.y = groundHeight;
+    } else if (spaceship.position.y > height) {
+        spaceship.position.y = height;
     }
+
+    // Limite da posição X
+    const maxX = 5;
+    const minX = -5;
+
+    if (spaceship.position.x > maxX) {
+        spaceship.position.x = maxX;
+    } else if (spaceship.position.x < minX) {
+        spaceship.position.x = minX;
+    }
+
+}
+
+function animate() {
+    requestAnimationFrame( animate );
+    renderer.render( scene, camera );
+    //console.log(score);
+    console.log(live);
     
-    animate();
+    checkCollisions();
+
+    spaceshipBox.setFromObject(spaceship);
+    
+    if(enemy){
+        enemyBox.setFromObject(enemy);
+        enemy.position.x += inc;
+        if(enemy.position.x >= 5){
+            inc = -0.08; // enemy spaceship going to right limit
+        }
+        else if(enemy.position.x <= -5){
+            inc = +0.08; // enemy spaceship going to left limit
+        }
+    }
+    if (shoot){
+        shootBox.setFromObject(shoot); 
+        //console.log(shootBox);
+        shoot.position.z -= 0.4;
+        if (shoot.position.z <= -8){
+            scene.remove(shoot);
+        } // adjust this value to change shoot speed
+    }
+
+    if (enemyShoot){
+        enemyShootBox.setFromObject(enemyShoot);
+        //console.log(enemyShootBox);
+        enemyShoot.position.z += 0.4; // adjust this value to change shoot speed
+        if (enemyShoot.position.z >= 12){
+            scene.remove(enemyShoot);
+        }
+    }
+
+    if (isTurningLeft) {
+        // Rotacionar para a esquerda
+        spaceship.rotation.z += rotationSpeed;
+    } 
+    else if (spaceship.rotation.z > 0) {
+        // Retornar à posição neutra
+        spaceship.rotation.z = Math.max(spaceship.rotation.z - rotationSpeed, 0);
+    }
+
+    if (isTurningRight) {
+        // Rotacionar para a direita
+        spaceship.rotation.z -= rotationSpeed;
+    } else if (spaceship.rotation.z < 0) {
+        // Retornar à posição neutra
+        spaceship.rotation.z = Math.min(spaceship.rotation.z + rotationSpeed, 0);
+    }
+
+    // Aplica o movimento à posição da nave
+    spaceship.position.add(movement.clone().multiplyScalar(0.1));
+    
+    checkBounds();
+    
+    sun.rotation.z += 0.01;
+
+    renderer.render( scene, camera );
+}
+    
+animate();
