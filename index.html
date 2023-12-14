@@ -6,13 +6,34 @@
         <link href="index.css" rel="stylesheet">
         <title>GL Invaders</title>
     </head>
+
     <body>
+               
         <div class="initScreen">
+            <audio autoplay loop src="./public/sounds/neon-gaming-128925.mp3"></audio>
+            
             <span>GL Invaders</span>
             <div class="buttons">
                 <button type="button"><a href="./game.html">Start</a></button>
                 <button type="button"><a href="./creators.html">Creators</a></button>
             </div>
+
+
+            <script>
+                var ost = document.getElementById("ost");
+                var defaultVolume = 0.35;
+                var isControllerHidden = false;
+                ost.volume = defaultVolume;
+            
+                var isMuted = false;
+            
+                document.addEventListener("keydown", function (event) {
+                    if (event.key.toLowerCase() === 'm') {
+                        isMuted = !isMuted;
+                        ost.volume = isMuted ? 0 : defaultVolume;
+                    }
+                });
+              </script>
         </div>
     </body>
 </html>
