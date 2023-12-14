@@ -143,7 +143,7 @@ let isTurningLeft = false;
 let isTurningRight = false;
 let isMovingUp = false;
 let isMovingDown = false;
-let rotationSpeed = 30  ;
+let rotationSpeed = 0.2;
 
 let movement = new THREE.Vector3(0, 0, 0);
 
@@ -162,9 +162,11 @@ document.addEventListener('keydown', (event) => {
             break;
         case 65: // Tecla A
             isTurningLeft = true;
+            movement.x = -1;
             break;
         case 68: // Tecla D
             isTurningRight = true;
+            movement.x = 1;
             break;
         case 87: // Tecla W
             movement.y = 1;
@@ -179,9 +181,11 @@ document.addEventListener('keyup', function(event) {
     switch (event.keyCode) {
         case 65: // A
             isTurningLeft = false;
+            movement.x = 0;
             break;
         case 68: // D
             isTurningRight = false;
+            movement.x = 0;
             break;
         case 87: // Tecla W
         case 83: // Tecla S
@@ -212,17 +216,15 @@ window.addEventListener('resize', function () {
 }, false);
 
 function checkBounds() {
-    const groundHeight = 0.25; // Ajuste esse valor para alterar a altura do solo
-    const height = 5.8;
+    const minY = 0.25; 
+    const maxY = 6.25;
 
-    // Limite da posição Y
-    if (spaceship.position.y < groundHeight) {
-        spaceship.position.y = groundHeight;
-    } else if (spaceship.position.y > height) {
-        spaceship.position.y = height;
+    if (spaceship.position.y < minY) {
+        spaceship.position.y = minY;
+    } else if (spaceship.position.y > maxY) {
+        spaceship.position.y = maxY;
     }
 
-    // Limite da posição X
     const maxX = 5;
     const minX = -5;
 
@@ -248,33 +250,39 @@ function animate() {
         enemyBox.setFromObject(enemy);
         enemy.position.x += inc;
         if(enemy.position.x >= 5){
-            inc = -0.08; // enemy spaceship going to right limit
+            inc = -0.09; // enemy spaceship going to right limit
         }
         else if(enemy.position.x <= -5){
-            inc = +0.08; // enemy spaceship going to left limit
+            inc = +0.09; // enemy spaceship going to left limit
         }
     }
     if (shoot){
         shootBox.setFromObject(shoot); 
         //console.log(shootBox);
-        shoot.position.z -= 0.4;
+        shoot.position.z -= 0.6;
         if (shoot.position.z <= -8){
             scene.remove(shoot);
-        } // adjust this value to change shoot speed
+        } 
     }
 
     if (enemyShoot){
         enemyShootBox.setFromObject(enemyShoot);
         //console.log(enemyShootBox);
-        enemyShoot.position.z += 0.4; // adjust this value to change shoot speed
+        enemyShoot.position.z += 0.6; // adjust this value to change shoot speed
         if (enemyShoot.position.z >= 12){
             scene.remove(enemyShoot);
         }
     }
 
+    // Aplica o movimento à posição da nave
+    spaceship.position.add(movement.clone().multiplyScalar(0.25));
+    
+    checkBounds();
+    
     if (isTurningLeft) {
-        // Rotacionar para a esquerda
-        spaceship.rotation.z += rotationSpeed;
+        if (spaceship.rotation.z < Math.PI / 4) {
+            spaceship.rotation.z += rotationSpeed;
+        }
     } 
     else if (spaceship.rotation.z > 0) {
         // Retornar à posição neutra
@@ -282,21 +290,21 @@ function animate() {
     }
 
     if (isTurningRight) {
-        // Rotacionar para a direita
-        spaceship.rotation.z -= rotationSpeed;
+        if (spaceship.rotation.z > -Math.PI / 4) {
+            spaceship.rotation.z -= rotationSpeed;
+        }
     } else if (spaceship.rotation.z < 0) {
         // Retornar à posição neutra
         spaceship.rotation.z = Math.min(spaceship.rotation.z + rotationSpeed, 0);
     }
 
-    // Aplica o movimento à posição da nave
-    spaceship.position.add(movement.clone().multiplyScalar(0.1));
-    
-    checkBounds();
-    
     sun.rotation.z += 0.01;
+    
+    document.getElementById('score').innerText = `Score: ${score}`;
 
     renderer.render( scene, camera );
 }
     
 animate();
+
+export { score };
