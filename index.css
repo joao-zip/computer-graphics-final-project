@@ -44,3 +44,21 @@ a {
     text-decoration: none;
     color: rgb(82, 69, 137);
 }
+
+#score {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-size: 56px;
+    z-index: 9999;
+}
+
+#controles-text {
+    position: fixed;
+    top: 100px;
+    left: 10px;
+    color: white;
+    font-size: 24px;
+    z-index: 9999;
+}
